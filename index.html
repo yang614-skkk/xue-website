@@ -1,0 +1,2015 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>硅基员工 - 成长打卡</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="打卡">
+  <style>
+    :root {
+      --primary: #00d4aa;
+      --primary-dark: #00b894;
+      --bg: #0f1419;
+      --card: #1a2332;
+      --text: #e6edf3;
+      --text-dim: #8b949e;
+      --danger: #ff6b6b;
+      --success: #51cf66;
+      --border: #30363d;
+      --book: #fdcb6e;
+      --yoga: #a29bfe;
+      --meditation: #74b9ff;
+      --review: #55efc4;
+      --account: #fd79a8;
+      --course: #fdcb6e;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f0f2f5;
+        --card: #ffffff;
+        --text: #1a1a2e;
+        --text-dim: #6b7280;
+        --border: #e5e7eb;
+      }
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .container { max-width: 560px; margin: 0 auto; }
+
+    .header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .avatar {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: 50%;
+      margin: 0 auto 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 0 20px rgba(0, 212, 170, 0.3);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 170, 0.3); }
+      50% { box-shadow: 0 0 40px rgba(0, 212, 170, 0.5); }
+    }
+
+    h1 { font-size: 20px; margin-bottom: 3px; }
+    .subtitle { color: var(--text-dim); font-size: 12px; }
+
+    .sync-status {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .sync-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .sync-dot.syncing {
+      background: var(--primary);
+      animation: blink 1s infinite;
+    }
+
+    .sync-dot.error {
+      background: var(--danger);
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .time-display {
+      text-align: center;
+      margin-bottom: 16px;
+      padding: 14px;
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .current-time {
+      font-size: 30px;
+      font-weight: 700;
+      font-family: 'SF Mono', Monaco, monospace;
+      color: var(--primary);
+    }
+
+    .current-date { color: var(--text-dim); font-size: 12px; margin-top: 3px; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab:hover { border-color: var(--primary); }
+    .tab.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    /* 类别卡片 */
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 400px) {
+      .categories-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .category-card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 12px 8px;
+      border: 1px solid var(--border);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .category-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .category-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      margin: 0 auto 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .category-card[data-cat="book"] .category-icon { background: rgba(253, 203, 110, 0.2); }
+    .category-card[data-cat="yoga"] .category-icon { background: rgba(162, 155, 254, 0.2); }
+    .category-card[data-cat="meditation"] .category-icon { background: rgba(116, 185, 255, 0.2); }
+    .category-card[data-cat="review"] .category-icon { background: rgba(85, 239, 196, 0.2); }
+    .category-card[data-cat="account"] .category-icon { background: rgba(253, 121, 168, 0.2); }
+    .category-card[data-cat="course"] .category-icon { background: rgba(253, 203, 110, 0.2); }
+
+    .category-name { font-size: 12px; font-weight: 600; }
+
+    .goal-progress {
+      margin-top: 6px;
+      background: var(--bg);
+      border-radius: 6px;
+      height: 6px;
+      overflow: hidden;
+    }
+
+    .goal-bar {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.3s ease;
+    }
+
+    .goal-bar.completed { background: var(--success); }
+    .goal-bar.in-progress { background: var(--primary); }
+    .goal-bar.low { background: var(--danger); }
+
+    .goal-text {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    .goal-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 22px;
+      height: 22px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      color: var(--text-dim);
+    }
+
+    .goal-btn:hover {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    /* 模态框 */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal-overlay.show { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+    }
+
+    .modal-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header h2 {
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .modal-body { padding: 16px; }
+
+    .form-group { margin-bottom: 14px; }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--text-dim);
+    }
+
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .quick-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .quick-tag {
+      padding: 4px 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .quick-tag:hover { border-color: var(--primary); }
+    .quick-tag.selected {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
+    }
+
+    .secondary-btn {
+      width: 100%;
+      padding: 10px;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: all 0.2s;
+    }
+
+    .secondary-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* 月份预览 */
+    .month-preview {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .month-selector {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .month-tab {
+      padding: 6px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .month-tab.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .month-stats {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 480px) {
+      .month-stats {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .month-stat {
+      text-align: center;
+      padding: 10px 4px;
+      background: var(--bg);
+      border-radius: 10px;
+    }
+
+    .month-stat-icon { font-size: 18px; margin-bottom: 3px; }
+    .month-stat-name { font-size: 10px; color: var(--text-dim); }
+    .month-stat-count { font-size: 16px; font-weight: 700; }
+
+    .month-stat[data-cat="book"] .month-stat-count { color: var(--book); }
+    .month-stat[data-cat="yoga"] .month-stat-count { color: var(--yoga); }
+    .month-stat[data-cat="meditation"] .month-stat-count { color: var(--meditation); }
+    .month-stat[data-cat="review"] .month-stat-count { color: var(--review); }
+    .month-stat[data-cat="account"] .month-stat-count { color: var(--account); }
+    .month-stat[data-cat="course"] .month-stat-count { color: var(--course); }
+
+    .month-stat-goal {
+      font-size: 9px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .month-stat-goal.completed { color: var(--success); }
+    .month-stat-goal.exceeded { color: var(--primary); }
+
+    /* 日历 */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+
+    .calendar-header {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-align: center;
+      padding: 5px 0;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      font-size: 11px;
+      background: var(--bg);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .calendar-day:hover { background: var(--border); }
+    .calendar-day.empty { background: transparent; cursor: default; }
+    .calendar-day.today { border: 2px solid var(--primary); }
+    .calendar-day.has-record { background: rgba(0, 212, 170, 0.15); }
+
+    .day-icons { font-size: 8px; line-height: 1; margin-top: 2px; }
+
+    /* 记录列表 */
+    .records-section {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .record-filters {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      padding: 6px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-chip.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .record-list { max-height: 300px; overflow-y: auto; }
+
+    .record-item {
+      display: flex;
+      align-items: flex-start;
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+
+    .record-cat-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+
+    .record-cat-badge[data-cat="book"] { background: rgba(253, 203, 110, 0.2); }
+    .record-cat-badge[data-cat="yoga"] { background: rgba(162, 155, 254, 0.2); }
+    .record-cat-badge[data-cat="meditation"] { background: rgba(116, 185, 255, 0.2); }
+    .record-cat-badge[data-cat="review"] { background: rgba(85, 239, 196, 0.2); }
+    .record-cat-badge[data-cat="account"] { background: rgba(253, 121, 168, 0.2); }
+    .record-cat-badge[data-cat="course"] { background: rgba(253, 203, 110, 0.2); }
+
+    .record-info { flex: 1; min-width: 0; }
+    .record-title { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
+    .record-meta { font-size: 11px; color: var(--text-dim); margin-bottom: 5px; }
+
+    .record-content-preview {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .record-delete {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .record-delete:hover {
+      background: rgba(255, 107, 107, 0.15);
+      color: var(--danger);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-dim);
+    }
+
+    .empty-state span { font-size: 40px; display: block; margin-bottom: 8px; }
+
+    /* 复盘页面 */
+    .review-summary {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .review-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .review-stat {
+      text-align: center;
+      padding: 12px 8px;
+      background: var(--card);
+      border-radius: 10px;
+    }
+
+    .review-stat-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .review-stat-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 3px;
+    }
+
+    .review-records {
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .review-record {
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+
+    .review-record-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .review-record-cat {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+    }
+
+    .review-record-cat[data-cat="book"] { background: rgba(253, 203, 110, 0.2); color: var(--book); }
+    .review-record-cat[data-cat="yoga"] { background: rgba(162, 155, 254, 0.2); color: var(--yoga); }
+    .review-record-cat[data-cat="meditation"] { background: rgba(116, 185, 255, 0.2); color: var(--meditation); }
+    .review-record-cat[data-cat="review"] { background: rgba(85, 239, 196, 0.2); color: var(--review); }
+    .review-record-cat[data-cat="account"] { background: rgba(253, 121, 168, 0.2); color: var(--account); }
+    .review-record-cat[data-cat="course"] { background: rgba(253, 203, 110, 0.2); color: var(--course); }
+
+    .review-record-time {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-left: auto;
+    }
+
+    .review-record-note {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 4px;
+      padding: 8px;
+      background: var(--card);
+      border-radius: 6px;
+    }
+
+    /* Toast */
+    .notification-toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: var(--card);
+      border: 1px solid var(--primary);
+      padding: 12px 18px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      z-index: 1001;
+      transition: transform 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .notification-toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* 目标模态框样式 */
+    .goal-form-title {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .current-goal {
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 8px;
+      margin-bottom: 14px;
+    }
+
+    .current-goal-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+
+    .current-goal-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .goal-hint {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+
+    /* 补打卡入口 */
+    .retroactive-section {
+      margin-bottom: 16px;
+    }
+
+    .retroactive-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--card);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      color: var(--text-dim);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .retroactive-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(0, 212, 170, 0.05);
+    }
+
+    /* 安装提示 */
+    .install-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      padding: 12px 16px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 99;
+    }
+
+    .install-banner.show {
+      display: flex;
+    }
+
+    .install-banner-text {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .install-btn {
+      padding: 8px 16px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="avatar">🤖</div>
+      <h1>硅基员工</h1>
+      <p class="subtitle">成长打卡系统</p>
+      <div class="sync-status">
+        <span class="sync-dot" id="syncDot"></span>
+        <span id="syncText">已同步</span>
+      </div>
+    </div>
+
+    <div class="time-display">
+      <div class="current-time" id="currentTime">--:--:--</div>
+      <div class="current-date" id="currentDate">----年--月--日 --</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('checkin')">📋 打卡</div>
+      <div class="tab" onclick="switchTab('review')">📊 月度复盘</div>
+    </div>
+
+    <div id="checkinTab">
+      <div class="categories-grid" id="categoriesGrid"></div>
+
+      <div class="retroactive-section">
+        <button class="retroactive-btn" onclick="showRetroactiveModal()">
+          📅 补打卡
+        </button>
+      </div>
+
+      <div class="month-preview">
+        <div class="section-title">📅 <span id="monthLabel">当月</span> 打卡日历</div>
+        <div class="month-selector" id="monthSelector"></div>
+        <div class="month-stats" id="monthStats"></div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+      </div>
+
+      <div class="records-section">
+        <div class="section-title">📝 最近记录</div>
+        <div class="record-filters" id="recordFilters"></div>
+        <div class="record-list" id="recordList"></div>
+      </div>
+    </div>
+
+    <div id="reviewTab" style="display: none;">
+      <div class="month-preview">
+        <div class="section-title">📈 <span id="reviewMonthLabel">当月</span> 成长复盘</div>
+        <div class="month-selector" id="reviewMonthSelector"></div>
+
+        <div class="review-summary">
+          <h4 style="font-size: 13px; margin-bottom: 10px; color: var(--text-dim);">📊 本月数据总览</h4>
+          <div class="review-stats-grid" id="reviewStats"></div>
+        </div>
+
+        <div class="review-records" id="reviewRecords"></div>
+      </div>
+
+      <button class="submit-btn" onclick="exportReview()" style="margin-top: 10px;">
+        📥 导出月度复盘
+      </button>
+    </div>
+  </div>
+
+  <!-- 打卡模态框 -->
+  <div class="modal-overlay" id="checkinModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">📋 打卡</h2>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- 目标设定模态框 -->
+  <div class="modal-overlay" id="goalModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="goalModalTitle">🎯 设置目标</h2>
+        <button class="modal-close" onclick="closeGoalModal()">×</button>
+      </div>
+      <div class="modal-body" id="goalModalBody"></div>
+    </div>
+  </div>
+
+  <!-- 安装提示条 -->
+  <div class="install-banner" id="installBanner">
+    <span class="install-banner-text">安装到桌面，随时打卡</span>
+    <button class="install-btn" onclick="installApp()">安装</button>
+  </div>
+
+  <div class="notification-toast" id="notificationToast">
+    <span>✅</span>
+    <span id="toastMessage">打卡成功！</span>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    const CATEGORIES = [
+      { id: 'book', name: '读书', icon: '📚', color: '#fdcb6e', unit: '次', hint: '本月计划读几本书？' },
+      { id: 'yoga', name: '瑜伽', icon: '🧘', color: '#a29bfe', unit: '次', hint: '本月计划练习几次瑜伽？' },
+      { id: 'meditation', name: '冥想', icon: '🧠', color: '#74b9ff', unit: '次', hint: '本月计划冥想几次？' },
+      { id: 'review', name: '写复盘', icon: '📝', color: '#55efc4', unit: '次', hint: '本月计划写几次复盘？' },
+      { id: 'account', name: '记账', icon: '💰', color: '#fd79a8', unit: '次', hint: '本月计划记账几次？' },
+      { id: 'course', name: '听课', icon: '🎓', color: '#fdcb6e', unit: '次', hint: '本月计划学习几门课程？' }
+    ];
+
+    let records = [];
+    let goals = {};
+    let selectedMonth = new Date();
+    let selectedFilter = 'all';
+    let currentTab = 'checkin';
+    let selectedCheckinDate = null;
+    let lastSyncTime = null;
+    let deferredPrompt = null;
+
+    // 初始化
+    function init() {
+      loadData();
+      renderCategories();
+      renderMonthSelector();
+      renderRecordFilters();
+      updateTime();
+      setInterval(updateTime, 1000);
+      renderReviewMonthSelector();
+      renderReview();
+      checkInstallPrompt();
+    }
+
+    // 云端同步
+    async function loadData() {
+      try {
+        updateSyncStatus('syncing');
+        const res = await fetch(`${API_BASE}/api/data`);
+        const data = await res.json();
+        records = data.records || [];
+        goals = data.goals || {};
+        lastSyncTime = data.lastSync;
+        localStorage.setItem('local_records', JSON.stringify(records));
+        localStorage.setItem('local_goals', JSON.stringify(goals));
+        renderRecords();
+        renderCalendar();
+        renderMonthStats();
+        renderCategories();
+        updateSyncStatus('synced');
+      } catch (e) {
+        // 离线模式，使用本地数据
+        const localRecords = localStorage.getItem('local_records');
+        const localGoals = localStorage.getItem('local_goals');
+        if (localRecords) records = JSON.parse(localRecords);
+        if (localGoals) goals = JSON.parse(localGoals);
+        renderRecords();
+        renderCalendar();
+        renderMonthStats();
+        updateSyncStatus('offline');
+      }
+    }
+
+    async function syncData() {
+      try {
+        updateSyncStatus('syncing');
+        const res = await fetch(`${API_BASE}/api/sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            records: records,
+            goals: goals,
+            clientLastSync: lastSyncTime
+          })
+        });
+        const data = await res.json();
+        records = data.records || records;
+        goals = data.goals || goals;
+        lastSyncTime = data.lastSync;
+        localStorage.setItem('local_records', JSON.stringify(records));
+        localStorage.setItem('local_goals', JSON.stringify(goals));
+        renderRecords();
+        renderCalendar();
+        renderMonthStats();
+        renderCategories();
+        updateSyncStatus('synced');
+      } catch (e) {
+        updateSyncStatus('error');
+      }
+    }
+
+    function updateSyncStatus(status) {
+      const dot = document.getElementById('syncDot');
+      const text = document.getElementById('syncText');
+      dot.className = 'sync-dot';
+
+      switch(status) {
+        case 'syncing':
+          dot.classList.add('syncing');
+          text.textContent = '同步中...';
+          break;
+        case 'synced':
+          text.textContent = '已同步';
+          break;
+        case 'offline':
+          dot.classList.add('error');
+          text.textContent = '离线模式';
+          break;
+        case 'error':
+          dot.classList.add('error');
+          text.textContent = '同步失败';
+          break;
+      }
+    }
+
+    function saveRecords() {
+      localStorage.setItem('local_records', JSON.stringify(records));
+      // 后台同步到服务器
+      fetch(`${API_BASE}/api/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          records: records,
+          goals: goals,
+          clientLastSync: lastSyncTime
+        })
+      }).catch(() => {});
+    }
+
+    function saveGoals() {
+      localStorage.setItem('local_goals', JSON.stringify(goals));
+      // 后台同步到服务器
+      fetch(`${API_BASE}/api/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          records: records,
+          goals: goals,
+          clientLastSync: lastSyncTime
+        })
+      }).catch(() => {});
+    }
+
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('currentTime').textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+      document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-CN', {
+        year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+      });
+    }
+
+    // PWA 安装
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('installBanner').classList.add('show');
+    });
+
+    function installApp() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choice) => {
+          if (choice.outcome === 'accepted') {
+            document.getElementById('installBanner').classList.remove('show');
+          }
+          deferredPrompt = null;
+        });
+      }
+    }
+
+    function checkInstallPrompt() {
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        document.getElementById('installBanner').classList.remove('show');
+      }
+    }
+
+    // 标签切换
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab').forEach((t, i) => {
+        t.classList.toggle('active', (tab === 'checkin' && i === 0) || (tab === 'review' && i === 1));
+      });
+      document.getElementById('checkinTab').style.display = tab === 'checkin' ? 'block' : 'none';
+      document.getElementById('reviewTab').style.display = tab === 'review' ? 'block' : 'none';
+
+      if (tab === 'review') {
+        renderReview();
+      }
+    }
+
+    function getCurrentMonthKey(date = new Date()) {
+      return `${date.getFullYear()}-${date.getMonth()}`;
+    }
+
+    // 渲染类别卡片
+    function renderCategories() {
+      const grid = document.getElementById('categoriesGrid');
+      const today = new Date().toDateString();
+      const monthKey = getCurrentMonthKey();
+
+      grid.innerHTML = CATEGORIES.map(cat => {
+        const todayCount = records.filter(r => r.category === cat.id && new Date(r.date).toDateString() === today).length;
+        const monthCount = records.filter(r => {
+          const d = new Date(r.date);
+          return r.category === cat.id && getCurrentMonthKey(d) === monthKey;
+        }).length;
+
+        const goal = goals[monthKey]?.[cat.id] || 0;
+        const progress = goal > 0 ? Math.min((monthCount / goal) * 100, 100) : 0;
+        let progressClass = 'in-progress';
+        if (progress >= 100) progressClass = 'completed';
+        else if (progress < 30) progressClass = 'low';
+
+        return `
+          <div class="category-card" data-cat="${cat.id}">
+            <button class="goal-btn" onclick="openGoalModal('${cat.id}', event)" title="设置目标">🎯</button>
+            <div class="category-icon">${cat.icon}</div>
+            <div class="category-name">${cat.name}</div>
+            <div class="goal-progress">
+              <div class="goal-bar ${progressClass}" style="width: ${progress}%"></div>
+            </div>
+            <div class="goal-text">
+              ${goal > 0 ? `${monthCount}/${goal}次` : '今日 ' + todayCount + ' 次'}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.category-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          if (!e.target.classList.contains('goal-btn')) {
+            openCheckinModal(card.dataset.cat);
+          }
+        });
+      });
+    }
+
+    function openGoalModal(categoryId, event) {
+      if (event) event.stopPropagation();
+
+      const cat = CATEGORIES.find(c => c.id === categoryId);
+      const monthKey = getCurrentMonthKey();
+      const currentGoal = goals[monthKey]?.[categoryId] || 0;
+
+      document.getElementById('goalModalTitle').innerHTML = `🎯 ${cat.icon} ${cat.name} 月度目标`;
+      document.getElementById('goalModalBody').innerHTML = `
+        <div class="goal-form-title">
+          ${new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' })} 目标
+        </div>
+
+        ${currentGoal > 0 ? `
+          <div class="current-goal">
+            <div class="current-goal-label">当前目标</div>
+            <div class="current-goal-value">${currentGoal} ${cat.unit}</div>
+          </div>
+        ` : ''}
+
+        <div class="form-group">
+          <label class="form-label">设置本月目标（${cat.unit}）</label>
+          <input type="number" class="form-input" id="goalInput" placeholder="${cat.hint}" value="${currentGoal || ''}" min="1">
+          <div class="goal-hint">${cat.hint}</div>
+        </div>
+
+        <button class="submit-btn" onclick="saveGoal('${categoryId}')">保存目标</button>
+        ${currentGoal > 0 ? `
+          <button class="secondary-btn" onclick="clearGoal('${categoryId}')">清除目标</button>
+        ` : ''}
+      `;
+
+      document.getElementById('goalModal').classList.add('show');
+    }
+
+    function closeGoalModal() {
+      document.getElementById('goalModal').classList.remove('show');
+    }
+
+    function saveGoal(categoryId) {
+      const goalValue = parseInt(document.getElementById('goalInput').value);
+      if (!goalValue || goalValue < 1) {
+        alert('请输入有效的目标值');
+        return;
+      }
+
+      const monthKey = getCurrentMonthKey();
+      if (!goals[monthKey]) goals[monthKey] = {};
+      goals[monthKey][categoryId] = goalValue;
+      saveGoals();
+      syncData();
+
+      closeGoalModal();
+      renderCategories();
+      renderMonthStats();
+      showToast('目标已保存！');
+    }
+
+    function clearGoal(categoryId) {
+      const monthKey = getCurrentMonthKey();
+      if (goals[monthKey]) {
+        delete goals[monthKey][categoryId];
+        saveGoals();
+        syncData();
+      }
+
+      closeGoalModal();
+      renderCategories();
+      renderMonthStats();
+      showToast('目标已清除');
+    }
+
+    function openCheckinModal(categoryId, date = null) {
+      const cat = CATEGORIES.find(c => c.id === categoryId);
+      selectedCheckinDate = date;
+      const isRetroactive = date !== null;
+
+      document.getElementById('modalTitle').innerHTML = `${cat.icon} ${cat.name} 打卡${isRetroactive ? ' <span style="color: var(--primary); font-size: 12px;">(补打卡)</span>' : ''}`;
+      document.getElementById('modalBody').innerHTML = getCategoryForm(categoryId, isRetroactive, date);
+
+      if (isRetroactive && date) {
+        const dateInput = document.getElementById('checkinDate');
+        if (dateInput) {
+          dateInput.value = date.toISOString().split('T')[0];
+        }
+      }
+
+      document.getElementById('checkinModal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('checkinModal').classList.remove('show');
+      selectedCheckinDate = null;
+    }
+
+    function getCategoryForm(categoryId, isRetroactive = false, date = null) {
+      const today = new Date().toISOString().split('T')[0];
+      const dateHtml = `
+        <div class="form-group">
+          <label class="form-label">📅 打卡日期 ${isRetroactive ? '(补打卡)' : ''}</label>
+          <input type="date" class="form-input" id="checkinDate" value="${isRetroactive && date ? date.toISOString().split('T')[0] : today}" max="${today}">
+        </div>
+      `;
+
+      const forms = {
+        book: `
+          ${dateHtml}
+          <div class="form-group">
+            <label class="form-label">书名</label>
+            <input type="text" class="form-input" id="bookName" placeholder="例如：原子习惯">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">阅读页数</label>
+              <input type="number" class="form-input" id="bookPages" placeholder="例如：30">
+            </div>
+            <div class="form-group">
+              <label class="form-label">阅读时长(分钟)</label>
+              <input type="number" class="form-input" id="bookTime" placeholder="例如：45">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">今日收获</label>
+            <textarea class="form-textarea" id="bookNote" placeholder="今天读到的最有感触的内容是什么？"></textarea>
+          </div>
+          <button class="submit-btn" onclick="submitCheckin('book')">完成打卡</button>
+        `,
+        yoga: `
+          ${dateHtml}
+          <div class="form-group">
+            <label class="form-label">练习场景</label>
+            <div class="quick-tags" id="yogaTypeTags">
+              <span class="quick-tag" onclick="selectTag(this, '线下课')">线下课</span>
+              <span class="quick-tag" onclick="selectTag(this, '线上录播')">线上录播</span>
+              <span class="quick-tag" onclick="selectTag(this, '家里')">家里</span>
+              <span class="quick-tag" onclick="selectTag(this, '瑜伽馆')">瑜伽馆</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">练习时长(分钟)</label>
+              <input type="number" class="form-input" id="yogaDuration" placeholder="例如：30">
+            </div>
+            <div class="form-group">
+              <label class="form-label">消耗卡路里</label>
+              <input type="number" class="form-input" id="yogaCal" placeholder="估计值">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">练习感受</label>
+            <textarea class="form-textarea" id="yogaNote" placeholder="今天身体感觉如何？"></textarea>
+          </div>
+          <button class="submit-btn" onclick="submitCheckin('yoga')">完成打卡</button>
+        `,
+        meditation: `
+          ${dateHtml}
+          <div class="form-group">
+            <label class="form-label">冥想场景</label>
+            <div class="quick-tags" id="meditationTypeTags">
+              <span class="quick-tag" onclick="selectTag(this, '早晨')">🌅 早晨</span>
+              <span class="quick-tag" onclick="selectTag(this, '午间')">☀️ 午间</span>
+              <span class="quick-tag" onclick="selectTag(this, '睡前')">🌙 睡前</span>
+              <span class="quick-tag" onclick="selectTag(this, '随时')">✨ 随时</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">冥想时长(分钟)</label>
+              <input type="number" class="form-input" id="meditationDuration" placeholder="例如：15">
+            </div>
+            <div class="form-group">
+              <label class="form-label">冥想类型</label>
+              <select class="form-select" id="meditationType">
+                <option value="">选择类型</option>
+                <option value="呼吸冥想">呼吸冥想</option>
+                <option value="身体扫描">身体扫描</option>
+                <option value="正念冥想">正念冥想</option>
+                <option value="慈心冥想">慈心冥想</option>
+                <option value="可视化">可视化</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">冥想感受</label>
+            <textarea class="form-textarea" id="meditationNote" placeholder="冥想时有什么感受？"></textarea>
+          </div>
+          <button class="submit-btn" onclick="submitCheckin('meditation')">完成打卡</button>
+        `,
+        review: `
+          ${dateHtml}
+          <div class="form-group">
+            <label class="form-label">复盘类型</label>
+            <div class="quick-tags" id="reviewTypeTags">
+              <span class="quick-tag" onclick="selectTag(this, '日复盘')">日复盘</span>
+              <span class="quick-tag" onclick="selectTag(this, '周复盘')">周复盘</span>
+              <span class="quick-tag" onclick="selectTag(this, '月度复盘')">月度复盘</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">今日完成</label>
+            <textarea class="form-textarea" id="reviewDone" placeholder="今天完成了哪些事情？"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">未完成事项</label>
+            <textarea class="form-textarea" id="reviewUndone" placeholder="今天没有完成什么？"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">明日计划</label>
+            <textarea class="form-textarea" id="reviewPlan" placeholder="明天要做什么？"></textarea>
+          </div>
+          <button class="submit-btn" onclick="submitCheckin('review')">完成打卡</button>
+        `,
+        account: `
+          ${dateHtml}
+          <div class="form-group">
+            <label class="form-label">交易类型</label>
+            <div class="quick-tags" id="accountTypeTags">
+              <span class="quick-tag" onclick="selectTag(this, '支出')">💸 支出</span>
+              <span class="quick-tag" onclick="selectTag(this, '收入')">💵 收入</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">金额(元)</label>
+              <input type="number" class="form-input" id="accountAmount" placeholder="例如：58.5">
+            </div>
+            <div class="form-group">
+              <label class="form-label">类别</label>
+              <select class="form-select" id="accountCat">
+                <option value="">选择类别</option>
+                <option value="餐饮">餐饮</option>
+                <option value="交通">交通</option>
+                <option value="购物">购物</option>
+                <option value="娱乐">娱乐</option>
+                <option value="居住">居住</option>
+                <option value="医疗">医疗</option>
+                <option value="工资">工资</option>
+                <option value="理财">理财</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">备注</label>
+            <textarea class="form-textarea" id="accountNote" placeholder="这笔钱的用途是什么？"></textarea>
+          </div>
+          <button class="submit-btn" onclick="submitCheckin('account')">完成打卡</button>
+        `,
+        course: `
+          ${dateHtml}
+          <div class="form-group">
+            <label class="form-label">课程名称</label>
+            <input type="text" class="form-input" id="courseName" placeholder="例如：Python入门">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">学习章节</label>
+              <input type="text" class="form-input" id="courseChapter" placeholder="例如：第3章">
+            </div>
+            <div class="form-group">
+              <label class="form-label">学习时长(分钟)</label>
+              <input type="number" class="form-input" id="courseDuration" placeholder="例如：60">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">课程来源</label>
+            <div class="quick-tags" id="courseSourceTags">
+              <span class="quick-tag" onclick="selectTag(this, 'B站')">B站</span>
+              <span class="quick-tag" onclick="selectTag(this, '得到')">得到</span>
+              <span class="quick-tag" onclick="selectTag(this, '极客时间')">极客时间</span>
+              <span class="quick-tag" onclick="selectTag(this, '网易云课堂')">网易云课堂</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">学习笔记</label>
+            <textarea class="form-textarea" id="courseNote" placeholder="今天学到了什么？"></textarea>
+          </div>
+          <button class="submit-btn" onclick="submitCheckin('course')">完成打卡</button>
+        `
+      };
+      return forms[categoryId] || '<p>暂不支持该类别</p>';
+    }
+
+    function selectTag(el, value) {
+      el.classList.toggle('selected');
+    }
+
+    function submitCheckin(categoryId) {
+      const now = new Date();
+      let content = {};
+      let title = '';
+
+      const dateInput = document.getElementById('checkinDate');
+      const selectedDate = dateInput ? new Date(dateInput.value + 'T12:00:00') : now;
+
+      switch(categoryId) {
+        case 'book':
+          const bookName = document.getElementById('bookName').value;
+          const bookPages = document.getElementById('bookPages').value;
+          const bookTime = document.getElementById('bookTime').value;
+          const bookNote = document.getElementById('bookNote').value;
+          if (!bookName) { alert('请输入书名'); return; }
+          title = bookName;
+          content = { pages: bookPages, duration: bookTime, note: bookNote };
+          break;
+        case 'yoga':
+          const selectedTags = [...document.querySelectorAll('#yogaTypeTags .selected')].map(el => el.textContent);
+          const yogaDuration = document.getElementById('yogaDuration').value;
+          const yogaCal = document.getElementById('yogaCal').value;
+          const yogaNote = document.getElementById('yogaNote').value;
+          if (selectedTags.length === 0) { alert('请选择练习场景'); return; }
+          title = selectedTags.join('、');
+          content = { duration: yogaDuration, calories: yogaCal, note: yogaNote };
+          break;
+        case 'meditation':
+          const medTags = [...document.querySelectorAll('#meditationTypeTags .selected')].map(el => el.textContent);
+          const medDuration = document.getElementById('meditationDuration').value;
+          const medType = document.getElementById('meditationType').value;
+          const medNote = document.getElementById('meditationNote').value;
+          if (!medDuration) { alert('请输入冥想时长'); return; }
+          title = medType || '冥想';
+          content = { time: medDuration, type: medType, note: medNote, period: medTags[0] || '' };
+          break;
+        case 'review':
+          const reviewTags = [...document.querySelectorAll('#reviewTypeTags .selected')].map(el => el.textContent);
+          const reviewDone = document.getElementById('reviewDone').value;
+          const reviewUndone = document.getElementById('reviewUndone').value;
+          const reviewPlan = document.getElementById('reviewPlan').value;
+          if (reviewTags.length === 0) { alert('请选择复盘类型'); return; }
+          title = reviewTags.join('、');
+          content = { done: reviewDone, undone: reviewUndone, plan: reviewPlan };
+          break;
+        case 'account':
+          const accountType = [...document.querySelectorAll('#accountTypeTags .selected')].map(el => el.textContent)[0];
+          const accountAmount = document.getElementById('accountAmount').value;
+          const accountCat = document.getElementById('accountCat').value;
+          const accountNote = document.getElementById('accountNote').value;
+          if (!accountType) { alert('请选择交易类型'); return; }
+          if (!accountAmount) { alert('请输入金额'); return; }
+          title = `${accountType} ${accountAmount}元`;
+          content = { amount: accountAmount, category: accountCat, note: accountNote, type: accountType.includes('支出') ? 'expense' : 'income' };
+          break;
+        case 'course':
+          const courseName = document.getElementById('courseName').value;
+          const courseChapter = document.getElementById('courseChapter').value;
+          const courseDuration = document.getElementById('courseDuration').value;
+          const courseTags = [...document.querySelectorAll('#courseSourceTags .selected')].map(el => el.textContent);
+          const courseNote = document.getElementById('courseNote').value;
+          if (!courseName) { alert('请输入课程名称'); return; }
+          title = courseName + (courseChapter ? ` - ${courseChapter}` : '');
+          content = { chapter: courseChapter, duration: courseDuration, source: courseTags[0] || '', note: courseNote };
+          break;
+      }
+
+      const record = {
+        id: Date.now(),
+        date: selectedDate.toISOString(),
+        category: categoryId,
+        title: title,
+        content: content,
+        time: selectedDate.toLocaleTimeString('zh-CN', { hour12: false })
+      };
+
+      records.unshift(record);
+      saveRecords();
+      syncData();
+      closeModal();
+      renderCategories();
+      renderRecords();
+      renderCalendar();
+      renderMonthStats();
+      showToast('打卡成功！');
+    }
+
+    function deleteRecord(id) {
+      if (!confirm('确定要删除这条记录吗？')) return;
+      records = records.filter(r => r.id !== id);
+      saveRecords();
+      syncData();
+      renderCategories();
+      renderRecords();
+      renderCalendar();
+      renderMonthStats();
+    }
+
+    function renderMonthSelector() {
+      const selector = document.getElementById('monthSelector');
+      const months = [];
+      for (let i = 0; i < 6; i++) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        months.push(d);
+      }
+
+      selector.innerHTML = months.map(m => {
+        const isActive = m.getFullYear() === selectedMonth.getFullYear() && m.getMonth() === selectedMonth.getMonth();
+        const label = m.toLocaleDateString('zh-CN', { year: 'numeric', month: 'short' });
+        return `<div class="month-tab ${isActive ? 'active' : ''}" onclick="selectMonth(${m.getFullYear()}, ${m.getMonth()})">${label}</div>`;
+      }).join('');
+
+      document.getElementById('monthLabel').textContent = selectedMonth.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' });
+    }
+
+    function selectMonth(year, month) {
+      selectedMonth = new Date(year, month, 1);
+      renderMonthSelector();
+      renderMonthStats();
+      renderCalendar();
+    }
+
+    function renderMonthStats() {
+      const stats = document.getElementById('monthStats');
+      const year = selectedMonth.getFullYear();
+      const month = selectedMonth.getMonth();
+      const monthKey = `${year}-${month}`;
+
+      stats.innerHTML = CATEGORIES.map(cat => {
+        const count = records.filter(r => {
+          const d = new Date(r.date);
+          return r.category === cat.id && d.getFullYear() === year && d.getMonth() === month;
+        }).length;
+
+        const goal = goals[monthKey]?.[cat.id] || 0;
+        let goalText = '';
+        let goalClass = '';
+
+        if (goal > 0) {
+          if (count >= goal) {
+            goalText = '✓ 完成';
+            goalClass = 'completed';
+          } else {
+            goalText = `${count}/${goal}`;
+          }
+        }
+
+        return `
+          <div class="month-stat" data-cat="${cat.id}">
+            <div class="month-stat-icon">${cat.icon}</div>
+            <div class="month-stat-name">${cat.name}</div>
+            <div class="month-stat-count">${count}</div>
+            ${goal > 0 ? `<div class="month-stat-goal ${goalClass}">${goalText}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById('calendarGrid');
+      const year = selectedMonth.getFullYear();
+      const month = selectedMonth.getMonth();
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startDayOfWeek = firstDay.getDay();
+
+      const today = new Date();
+      const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+
+      let html = '<div class="calendar-header">日</div><div class="calendar-header">一</div><div class="calendar-header">二</div><div class="calendar-header">三</div><div class="calendar-header">四</div><div class="calendar-header">五</div><div class="calendar-header">六</div>';
+
+      for (let i = 0; i < startDayOfWeek; i++) {
+        html += '<div class="calendar-day empty"></div>';
+      }
+
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const date = new Date(year, month, day);
+        const dateStr = date.toDateString();
+        const dayRecords = records.filter(r => new Date(r.date).toDateString() === dateStr);
+        const isToday = isCurrentMonth && today.getDate() === day;
+        const hasRecord = dayRecords.length > 0;
+        const icons = [...new Set(dayRecords.map(r => CATEGORIES.find(c => c.id === r.category)?.icon || ''))].filter(Boolean).slice(0, 3);
+
+        html += `
+          <div class="calendar-day ${isToday ? 'today' : ''} ${hasRecord ? 'has-record' : ''}"
+               onclick="showDayMenu(${year}, ${month}, ${day})"
+               title="点击添加打卡">
+            <span>${day}</span>
+            ${icons.length > 0 ? `<div class="day-icons">${icons.join('')}</div>` : ''}
+          </div>
+        `;
+      }
+
+      grid.innerHTML = html;
+    }
+
+    function showDayMenu(year, month, day) {
+      const date = new Date(year, month, day);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+
+      if (date > today) {
+        return;
+      }
+
+      const dateStr = date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', weekday: 'short' });
+      const menuItems = CATEGORIES.map(cat =>
+        `<div class="quick-tag" onclick="openCheckinModal('${cat.id}', new Date(${year}, ${month}, ${day}))" style="padding: 10px 16px;">
+          ${cat.icon} ${cat.name}
+        </div>`
+      ).join('');
+
+      document.getElementById('modalTitle').innerHTML = `📅 选择打卡类别`;
+      document.getElementById('modalBody').innerHTML = `
+        <div class="goal-form-title">
+          ${dateStr}
+        </div>
+        <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 14px; text-align: center;">
+          选择要打卡的项目
+        </p>
+        <div class="quick-tags" style="gap: 8px;">
+          ${menuItems}
+        </div>
+      `;
+      document.getElementById('checkinModal').classList.add('show');
+    }
+
+    function showRetroactiveModal() {
+      const today = new Date().toISOString().split('T')[0];
+      const menuItems = CATEGORIES.map(cat =>
+        `<div class="quick-tag" onclick="showDatePickerForCategory('${cat.id}')" style="padding: 10px 16px;">
+          ${cat.icon} ${cat.name}
+        </div>`
+      ).join('');
+
+      document.getElementById('modalTitle').innerHTML = `📅 补打卡`;
+      document.getElementById('modalBody').innerHTML = `
+        <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 14px; text-align: center;">
+          先选择要打卡的项目
+        </p>
+        <div class="quick-tags" style="gap: 8px;">
+          ${menuItems}
+        </div>
+      `;
+      document.getElementById('checkinModal').classList.add('show');
+    }
+
+    function showDatePickerForCategory(categoryId) {
+      const cat = CATEGORIES.find(c => c.id === categoryId);
+      const today = new Date().toISOString().split('T')[0];
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const defaultDate = thirtyDaysAgo.toISOString().split('T')[0];
+
+      document.getElementById('modalTitle').innerHTML = `${cat.icon} ${cat.name} 补打卡`;
+      document.getElementById('modalBody').innerHTML = `
+        <div class="form-group">
+          <label class="form-label">选择补打卡日期</label>
+          <input type="date" class="form-input" id="retroactiveDate" value="${defaultDate}" max="${today}">
+        </div>
+        <button class="submit-btn" onclick="openCheckinWithDate('${categoryId}')">下一步</button>
+      `;
+    }
+
+    function openCheckinWithDate(categoryId) {
+      const dateInput = document.getElementById('retroactiveDate');
+      if (!dateInput || !dateInput.value) {
+        alert('请选择日期');
+        return;
+      }
+      const date = new Date(dateInput.value + 'T12:00:00');
+      closeModal();
+      setTimeout(() => {
+        openCheckinModal(categoryId, date);
+      }, 100);
+    }
+
+    function renderRecordFilters() {
+      const filters = document.getElementById('recordFilters');
+      filters.innerHTML = `
+        <div class="filter-chip ${selectedFilter === 'all' ? 'active' : ''}" onclick="setFilter('all')">全部</div>
+        ${CATEGORIES.map(cat => `
+          <div class="filter-chip ${selectedFilter === cat.id ? 'active' : ''}" onclick="setFilter('${cat.id}')">
+            ${cat.icon} ${cat.name}
+          </div>
+        `).join('')}
+      `;
+    }
+
+    function setFilter(filter) {
+      selectedFilter = filter;
+      renderRecordFilters();
+      renderRecords();
+    }
+
+    function renderRecords() {
+      const list = document.getElementById('recordList');
+      let filtered = selectedFilter === 'all' ? records : records.filter(r => r.category === selectedFilter);
+
+      if (filtered.length === 0) {
+        list.innerHTML = '<div class="empty-state"><span>📝</span><p>暂无记录</p></div>';
+        return;
+      }
+
+      list.innerHTML = filtered.slice(0, 30).map(record => {
+        const cat = CATEGORIES.find(c => c.id === record.category);
+        const date = new Date(record.date);
+        const dateStr = date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', weekday: 'short' });
+        const today = new Date().toDateString();
+        const isToday = date.toDateString() === today;
+        const isRetroactive = !isToday;
+
+        let contentPreview = '';
+        if (record.content.note) contentPreview = record.content.note;
+        else if (record.content.done) contentPreview = `完成: ${record.content.done}`;
+        else if (record.content.amount) contentPreview = `${record.content.category || ''} ${record.content.note || ''}`.trim();
+
+        return `
+          <div class="record-item">
+            <div class="record-cat-badge" data-cat="${record.category}">${cat?.icon || '📌'}</div>
+            <div class="record-info">
+              <div class="record-title">
+                ${record.title}
+                ${isRetroactive ? '<span style="color: var(--primary); font-size: 10px; margin-left: 6px;">补</span>' : ''}
+              </div>
+              <div class="record-meta">${dateStr} ${record.time}</div>
+              ${contentPreview ? `<div class="record-content-preview">${contentPreview}</div>` : ''}
+            </div>
+            <button class="record-delete" onclick="deleteRecord(${record.id})">🗑️</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderReviewMonthSelector() {
+      const selector = document.getElementById('reviewMonthSelector');
+      const months = [];
+      for (let i = 0; i < 6; i++) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        months.push(d);
+      }
+
+      selector.innerHTML = months.map(m => {
+        const label = m.toLocaleDateString('zh-CN', { year: 'numeric', month: 'short' });
+        return `<div class="month-tab active" onclick="selectReviewMonth('${label}')">${label}</div>`;
+      }).join('');
+
+      selector.querySelectorAll('.month-tab')[0].classList.add('active');
+    }
+
+    function selectReviewMonth(label) {
+      document.querySelectorAll('#reviewMonthSelector .month-tab').forEach(t => {
+        t.classList.toggle('active', t.textContent === label);
+      });
+      document.getElementById('reviewMonthLabel').textContent = label;
+      renderReview(label);
+    }
+
+    function renderReview(monthStr = null) {
+      const stats = document.getElementById('reviewStats');
+      const list = document.getElementById('reviewRecords');
+
+      const now = new Date();
+      let year, month;
+
+      if (monthStr) {
+        const parts = monthStr.match(/(\d+)年(\d+)月/);
+        if (parts) {
+          year = parseInt(parts[1]);
+          month = parseInt(parts[2]) - 1;
+        }
+      }
+
+      if (!year) {
+        year = now.getFullYear();
+        month = now.getMonth();
+      }
+
+      const monthRecords = records.filter(r => {
+        const d = new Date(r.date);
+        return d.getFullYear() === year && d.getMonth() === month;
+      });
+
+      const monthKey = `${year}-${month}`;
+      const catStats = CATEGORIES.map(cat => {
+        const count = monthRecords.filter(r => r.category === cat.id).length;
+        const goal = goals[monthKey]?.[cat.id] || 0;
+        const completed = goal > 0 && count >= goal;
+        return { ...cat, count, goal, completed };
+      });
+
+      const accountRecords = monthRecords.filter(r => r.category === 'account');
+      const income = accountRecords.filter(r => r.content.type !== 'expense').reduce((sum, r) => sum + parseFloat(r.content.amount || 0), 0);
+      const expense = accountRecords.filter(r => r.content.type === 'expense' || !r.content.type).reduce((sum, r) => sum + parseFloat(r.content.amount || 0), 0);
+
+      stats.innerHTML = `
+        <div class="review-stat">
+          <div class="review-stat-value">${monthRecords.length}</div>
+          <div class="review-stat-label">总打卡</div>
+        </div>
+        <div class="review-stat">
+          <div class="review-stat-value" style="color: #51cf66;">+${income.toFixed(0)}</div>
+          <div class="review-stat-label">收入(元)</div>
+        </div>
+        <div class="review-stat">
+          <div class="review-stat-value" style="color: #ff6b6b;">-${expense.toFixed(0)}</div>
+          <div class="review-stat-label">支出(元)</div>
+        </div>
+      `;
+
+      const catStatsHtml = catStats.map(c => `
+        <div class="review-stat">
+          <div class="review-stat-value" style="font-size: 18px;">${c.icon}</div>
+          <div class="review-stat-label">
+            ${c.name} ${c.count}次
+            ${c.goal > 0 ? `<br><span style="color: ${c.completed ? 'var(--success)' : 'var(--text-dim)'};">目标${c.completed ? '✓' : c.count + '/' + c.goal}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      stats.innerHTML += catStatsHtml;
+
+      const groupedRecords = {};
+      monthRecords.forEach(r => {
+        const dateKey = new Date(r.date).toDateString();
+        if (!groupedRecords[dateKey]) groupedRecords[dateKey] = [];
+        groupedRecords[dateKey].push(r);
+      });
+
+      const sortedDates = Object.keys(groupedRecords).sort((a, b) => new Date(b) - new Date(a));
+
+      if (sortedDates.length === 0) {
+        list.innerHTML = '<div class="empty-state"><span>📊</span><p>本月暂无记录</p></div>';
+        return;
+      }
+
+      list.innerHTML = sortedDates.map(dateKey => {
+        const date = new Date(dateKey);
+        const dayRecords = groupedRecords[dateKey];
+
+        return `
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 13px; color: var(--text-dim); margin-bottom: 8px;">
+              ${date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', weekday: 'short' })}
+            </div>
+            ${dayRecords.map(r => {
+              const cat = CATEGORIES.find(c => c.id === r.category);
+              let contentHtml = '';
+
+              if (r.content.note) contentHtml = `<div class="review-record-note">📝 ${r.content.note}</div>`;
+              else if (r.content.pages) contentHtml = `<div class="review-record-note">📖 ${r.content.pages}页 | ${r.content.duration}分钟</div>`;
+              else if (r.content.duration) contentHtml = `<div class="review-record-note">⏱️ ${r.content.duration}分钟 ${r.content.calories ? '| 🔥 ' + r.content.calories + '卡' : ''}</div>`;
+              else if (r.content.done) {
+                contentHtml = `<div class="review-record-note">
+                  ✅ ${r.content.done || '无'}<br>
+                  ❌ ${r.content.undone || '无'}<br>
+                  📅 ${r.content.plan || '无'}
+                </div>`;
+              }
+              else if (r.content.amount) contentHtml = `<div class="review-record-note">💰 ${r.content.category || ''} ${r.content.note || ''}</div>`;
+
+              return `
+                <div class="review-record">
+                  <div class="review-record-header">
+                    <span class="review-record-cat" data-cat="${r.category}">${cat?.icon || '📌'} ${r.title}</span>
+                    <span class="review-record-time">${r.time}</span>
+                  </div>
+                  ${contentHtml}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function exportReview() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const monthKey = `${year}-${month}`;
+      const monthRecords = records.filter(r => {
+        const d = new Date(r.date);
+        return d.getFullYear() === year && d.getMonth() === month;
+      });
+
+      if (monthRecords.length === 0) {
+        alert('本月暂无记录可导出');
+        return;
+      }
+
+      let report = `# ${year}年${month + 1}月成长复盘\n\n`;
+      report += `生成时间: ${now.toLocaleString('zh-CN')}\n\n`;
+
+      const catStats = CATEGORIES.map(cat => {
+        const count = monthRecords.filter(r => r.category === cat.id).length;
+        const goal = goals[monthKey]?.[cat.id] || 0;
+        return { ...cat, count, goal };
+      });
+
+      report += `## 🎯 目标完成情况\n\n`;
+      report += `| 类别 | 完成 | 目标 | 状态 |\n|------|------|------|------|\n`;
+      catStats.forEach(c => {
+        const status = c.goal > 0 ? (c.count >= c.goal ? '✅ 完成' : '⏳ 进行中') : '-';
+        report += `| ${c.icon} ${c.name} | ${c.count} | ${c.goal || '-'} | ${status} |\n`;
+      });
+
+      report += `\n## 📊 打卡统计\n\n`;
+      report += `| 类别 | 打卡次数 |\n|------|----------|\n`;
+      catStats.forEach(c => {
+        report += `| ${c.icon} ${c.name} | ${c.count} |\n`;
+      });
+
+      const accountRecords = monthRecords.filter(r => r.category === 'account');
+      const income = accountRecords.filter(r => r.content.type !== 'expense').reduce((sum, r) => sum + parseFloat(r.content.amount || 0), 0);
+      const expense = accountRecords.filter(r => r.content.type === 'expense' || !r.content.type).reduce((sum, r) => sum + parseFloat(r.content.amount || 0), 0);
+
+      report += `\n## 💰 收支统计\n\n`;
+      report += `- 收入: +${income.toFixed(2)}元\n`;
+      report += `- 支出: -${expense.toFixed(2)}元\n`;
+      report += `- 结余: ${(income - expense).toFixed(2)}元\n`;
+
+      report += `\n## 📝 每日记录\n\n`;
+
+      const groupedRecords = {};
+      monthRecords.forEach(r => {
+        const dateKey = new Date(r.date).toDateString();
+        if (!groupedRecords[dateKey]) groupedRecords[dateKey] = [];
+        groupedRecords[dateKey].push(r);
+      });
+
+      const sortedDates = Object.keys(groupedRecords).sort((a, b) => new Date(b) - new Date(a));
+
+      sortedDates.forEach(dateKey => {
+        const date = new Date(dateKey);
+        const dayRecords = groupedRecords[dateKey];
+
+        report += `### ${date.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' })}\n\n`;
+
+        dayRecords.forEach(r => {
+          report += `#### ${CATEGORIES.find(c => c.id === r.category)?.icon || '📌'} ${r.title}\n`;
+          report += `时间: ${r.time}\n`;
+
+          if (r.content.note) report += `${r.content.note}\n`;
+          else if (r.content.pages) report += `阅读: ${r.content.pages}页, ${r.content.duration}分钟\n`;
+          else if (r.content.duration) report += `练习: ${r.content.duration}分钟${r.content.calories ? ', 消耗' + r.content.calories + '卡' : ''}\n`;
+          else if (r.content.done) {
+            report += `- 完成: ${r.content.done || '无'}\n`;
+            report += `- 未完成: ${r.content.undone || '无'}\n`;
+            report += `- 计划: ${r.content.plan || '无'}\n`;
+          }
+          else if (r.content.amount) report += `${r.content.category || ''} ${r.content.note || ''}\n`;
+
+          report += `\n`;
+        });
+      });
+
+      const blob = new Blob([report], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `复盘_${year}年${month + 1}月.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      showToast('复盘报告已导出！');
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('notificationToast');
+      document.getElementById('toastMessage').textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // 启动
+    init();
+  </script>
+</body>
+</html>
