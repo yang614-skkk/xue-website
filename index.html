@@ -908,6 +908,18 @@
 
   <script>
     const API_BASE = window.location.origin;
+
+    // 生成或获取用户ID（基于设备指纹）
+    function getUserId() {
+      let userId = localStorage.getItem('checkin_user_id');
+      if (!userId) {
+        userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('checkin_user_id', userId);
+      }
+      return userId;
+    }
+    const USER_ID = getUserId();
+
     const CATEGORIES = [
       { id: 'book', name: '读书', icon: '📚', color: '#fdcb6e', unit: '次', hint: '本月计划读几本书？' },
       { id: 'yoga', name: '瑜伽', icon: '🧘', color: '#a29bfe', unit: '次', hint: '本月计划练习几次瑜伽？' },
@@ -943,7 +955,7 @@
     async function loadData() {
       try {
         updateSyncStatus('syncing');
-        const res = await fetch(`${API_BASE}/api/data`);
+        const res = await fetch(`${API_BASE}/api/data/${USER_ID}`);
         const data = await res.json();
         records = data.records || [];
         goals = data.goals || {};
@@ -971,7 +983,7 @@
     async function syncData() {
       try {
         updateSyncStatus('syncing');
-        const res = await fetch(`${API_BASE}/api/sync`, {
+        const res = await fetch(`${API_BASE}/api/sync/${USER_ID}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1023,7 +1035,7 @@
     function saveRecords() {
       localStorage.setItem('local_records', JSON.stringify(records));
       // 后台同步到服务器
-      fetch(`${API_BASE}/api/sync`, {
+      fetch(`${API_BASE}/api/sync/${USER_ID}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1037,7 +1049,7 @@
     function saveGoals() {
       localStorage.setItem('local_goals', JSON.stringify(goals));
       // 后台同步到服务器
-      fetch(`${API_BASE}/api/sync`, {
+      fetch(`${API_BASE}/api/sync/${USER_ID}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

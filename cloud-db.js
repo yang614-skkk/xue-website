@@ -1,9 +1,8 @@
 /**
  * 使用 JSONBin.io 作为免费云数据库
- * 注册 https://jsonbin.io 免费获取 API Key
  */
-const API_KEY = 'YOUR_API_KEY_HERE'; // 替换为你的 API Key
-const BIN_ID = 'YOUR_BIN_ID_HERE';   // 替换为你的 Bin ID
+const API_KEY = '$2a$10$PUNN3P.c5FnMC6dTwKTFX.70aARXNZ08fvBhjE8r3J3Cil7FvFZma';
+const BIN_ID = '6ab1643bac6210605ae66521';
 
 const API_BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
